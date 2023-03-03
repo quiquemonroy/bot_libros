@@ -1,0 +1,149 @@
+Metadata-Version: 2.1
+Name: bottilities
+Version: 1.4.0
+Summary: Simple utilities for dev work.
+Home-page: https://github.com/lunemercove/bottilities
+Download-URL: https://github.com/lunemercove/bottilities/archive/v1.4.0.tar.gz
+Author: Luné Mercové
+Author-email: pypi@lune.gay
+License: BSD3
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Natural Language :: English
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: POSIX :: BSD
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Typing :: Typed
+Requires-Python: >=3.6
+License-File: LICENSE
+Requires-Dist: clint (<0.6.0,>=0.5.1)
+Requires-Dist: requests (<3.0.0,>=2.28.0)
+
+bottilities
+=============
+
+| |BSD3 License|
+
+.. |BSD3 License| image:: http://img.shields.io/badge/license-BSD3-brightgreen.svg
+   :target: https://tldrlegal.com/license/bsd-3-clause-license-%28revised%29
+
+=====
+short
+=====
+Utility functions for bots.
+Used in `botskeleton`_ (and all the bots that use it) and `puckfetcher`_.
+
+.. _botskeleton: https://github.com/lunemercove/botskeleton
+.. _puckfetcher: https://github.com/lunemercove/puckfetcher
+
+====
+long
+====
+These are in the order defined in :code:`bottilities.py`,
+which in turn is basically defined by order of creation.
+Not really organized nicely,
+sorry.
+
+=======
+Methods
+=======
+
+-----------------------------
+:code:`ensure_dir(directory)`
+-----------------------------
+Create directory if it doesn't exist.
+
+-------------------------
+:code:`expand(directory)`
+-------------------------
+Expand :code:`~` to :code:`$HOME`,
+and expand other environment variables to their values,
+in the provided path.
+Designed for UNIX-based platforms:
+unclear what will happen on others.
+
+-----------------------------------------------------------
+:code:`generate_downloader(headers, args, max_per_hour=30)`
+-----------------------------------------------------------
+Produce a callable downloader.
+Provide headers for URL call,
+and provide some args
+(for the rate limiting
+(see that later in the document)),
+which will be used to identify this function in rate-limiting.
+:code:`max_per_hour` is optional:
+use it to decide how many times per hour downloads can happen.
+The default is 30 times per hour.
+The returned downloader is called as follows:
+
+.. code-block:: python
+
+    downloader = generate_downloader({"foo": "bar"}, "an identifier string")
+    downloader(url=url, dest=dest)
+
+where :code:`url` is where to download FROM and :code:`dest` is where to SAVE the file.
+It will make the directory for the file if it does not exist.
+A text progress bar is shown during download,
+and while rate limit is blocking.
+
+-----------------------------
+:code:`max_clamp(val, limit)`
+-----------------------------
+Return :code:`val` if it is less than :code:`limit`,
+otherwise return :code:`limit`.
+
+------------------------------------
+:code:`parse_int_string(int_string)`
+------------------------------------
+Given a string like "1 23 4-8 32 1",
+return a unique list of those integers in the string,
+and the integers in the ranges in the string.
+For this example,
+the output would be [1, 4, 5, 6, 7, 8, 23, 32].
+Non-numbers ignored.
+Not necessarily sorted
+
+-----------------------------------------
+:code:`rate_limited(max_per_hour, *args)`
+-----------------------------------------
+A decorator to rate-limit a function
+(ensures that it runs no more than :code:`max_per_hour` times per hour by sleeping sometimes).
+Called like this:
+
+.. code-block:: python
+
+    @util.rate_limited(120, name)
+    def a_function(var1, var2="foo"):
+
+-----------------------------------------
+:code:`sanitize(filename, platform=None)`
+-----------------------------------------
+Remove disallowed characters from potential filename.
+Provide platform to sanitize for that platform,
+otherwise current platform is found and used.
+
+-------------------------------------------------------
+:code:`set_up_logging(log_filename="log", verbosity=0)`
+-------------------------------------------------------
+Set up a logger with reasonable settings.
+Return it for log calls.
+
+--------------------------------------------------------
+:code:`random_line(file_path, encoding=FORCED_ENCODING)`
+--------------------------------------------------------
+At time of writing,
+:code:`FORCED_ENCODING` is "UTF-8".
+Refer to code for latest.
+Return a line from the provided file at random.

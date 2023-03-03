@@ -1,0 +1,343 @@
+Metadata-Version: 2.1
+Name: botskeleton
+Version: 3.3.9
+Summary: A skeleton for content bots.
+Home-page: https://github.com/lunemercove/botskeleton
+Author: Luné Mercové
+Author-email: pypi@lune.gay
+License: BSD3
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Natural Language :: English
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: POSIX :: BSD :: FreeBSD
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Typing :: Typed
+Requires-Python: >=3.6
+License-File: LICENSE
+Requires-Dist: clint (<0.6.0,>=0.5.1)
+Requires-Dist: bottilities (<2.0.0,>=1.4.0)
+Requires-Dist: tweepy (<5.0,>=4.12.0)
+Requires-Dist: Mastodon.py (<2.0,>=1.5.1)
+
+botskeleton
+=============
+
+=====
+short
+=====
+skeleton for bot children written in Python.
+
+Created by Luné Mercové ahead of #NaBoMaMo 2017
+
+====
+long
+====
+botskeleton is a framework for content bots,
+like `Twitter bots`_
+and `Mastodon bots`_
+
+.. _Twitter bots: https://twitter.com/nonogram_bot/status/1042453809945993216
+.. _Mastodon bots: https://botsin.space/@nonogram_bot
+
+==========
+Public API
+==========
+The public API is contained entirely in botskeleton.py.
+
+===================
+:code:`Botskeleton`
+===================
+The :code:`BotSkeleton` class is the main object for a bot,
+holding all the send methods and credentials.
+It MUST be constructed with a `secrets_dir`
+- this is the directory where it will expect credentials,
+and where it will write its history file and log file by default.
+You may also provide a log_filename (defaults to :code:`SECRETS_DIR/log`),
+a bot_name (defaults to "A bot"),
+a history_filename (defaults to :code:`SECRETS_DIR/bot_name-history.json`),
+and a delay,
+which is the time the bot will sleep after posting.
+
+With a botskeleton,
+you can send to the outputs in various ways (outputs described later).
+All methods will generate :code:`IterationRecords`,
+update the history,
+and save the history.
+
+===========
+Bot Methods
+===========
+These are methods intended to be used to send bot methods.
+
+-----------------------------------
+:code:`send(self, text, text=TEXT)`
+-----------------------------------
+:code:`send` is a plain text send method.
+It will send the text to all configured outputs and save the result.
+`text` can be provided either as a positional argument or a keyword one.
+
+---------------------------------------------------------------------------------------------------------
+:code:`send_with_one_media(self, text, filename, caption, text=TEXT, filename=FILENAME, caption=CAPTION)`
+---------------------------------------------------------------------------------------------------------
+:code:`send_with_one_media` will call each output and have them upload the file
+(as dictated by the output),
+and send a message with the provided text and that image.
+If a caption is provided,
+it will be uploaded alongside the image as appropriate.
+A default caption will be used if none is provided.
+`text`, `filename`, and `caption` can be provided either as positional arguments,
+in which case they MUST be in this order,
+or as keyword ones.
+
+-----------------------------------------------------------------------------------------------------
+:code:`send_with_many_media(self, text, *filenames, text=TEXT, filenames=FILENAMES, caption=CAPTION)`
+-----------------------------------------------------------------------------------------------------
+:code:`send_with_many_media` will call each output and have them upload several files
+(as dictated by the output),
+and send a message with the provided text and those image.
+A current known bug is that the built-in outputs limits how many images they can post at once,
+but there is no limiting in this method.
+If you post more than four images with this method,
+you may see strange results in the outputs.
+If captions are provided,
+they will be uploaded alongside the images as appropriate.
+A default caption will be used for all images ifnone is provided,
+and for images with no caption if insufficient captions are provided.
+`text` and `filenames` can be provided either as positional arguments,
+in which case they MUST be in this order,
+or as keyword ones.
+`caption` must be provided as a keyword argument.
+
+-----------------
+:code:`nap(self)`
+-----------------
+Sleep for the configured amount of seconds.
+
+------------------------------------------
+:code:`store_extra_info(self, key, value)`
+------------------------------------------
+:code:`store_extra_info` will take the provided key and value and store them.
+When history is updated,
+extra_info is also stored in the history file.
+The intended use case is to store something related to each post,
+like a random seed used to generate the text,
+or some related values that might be nice to see alongside it in the history storage.
+Feel free to store whatever you like.
+
+------------------------------------
+:code:`store_extra_keys(self, dict)`
+------------------------------------
+:code:`store_extra_keys` will take an entire dictionary,
+and merge it with the :code:`extra_keys` storage.
+As before,
+this will be stored in thie history logs.
+
+----------------------------
+:code:`update_history(self)`
+----------------------------
+Save the in-object history to disk,
+in the history file.
+History is saved as pretty-printed JSON.
+This is called automatically by every send method.
+
+--------------------------
+:code:`load_history(self)`
+--------------------------
+Load the history from disk. Done automatically when the :code:`BotSkeleton` object is initialized.
+
+===============
+Utility Methods
+===============
+Some utility methods,
+exposed from :code:`bottilities`
+
+-----------------------------------------
+:code:`rate_limited(max_per_hour, *args)`
+-----------------------------------------
+Annotation to rate-limit a function.
+It will sleep such that it is called no more than :code:`max_per_hour` times per hour.
+
+------------------------------------
+:code:`set_up_logging(log_filename)`
+------------------------------------
+Set up a logger with the provided filename.
+This is called by the constructor automatically.
+
+------------------------------
+:code:`random_line(file_path)`
+------------------------------
+Return a random line from the provided file.
+Useful for bots.
+
+----------------------
+:code:`repair(record)`
+----------------------
+NOT INTENDED FOR MANUAL USE.
+This is a method to repair a particular form of history corruption.
+Automatically called by :code:`load_history`.
+
+=======================
+:code:`IterationRecord`
+=======================
+Record of one iteration -
+one generation of text and a send to all outputs.
+Stores extra keys,
+a timestamp,
+and records for all outputs (see output section).
+
+=================
+Other Information
+=================
+
+=======
+Outputs
+=======
+:code:`botskeleton` is designed to output to an arbitrary number of outputs.
+Outputs need to be in the :code:`outputs` property in :code:`BotSkeleton`.
+They need to have an "active" key,
+used to decide whether to output,
+and an "obj" key that should be a call to the constructor of the object.
+:code:`output/output_utils.py` defines the :code:`OutputSkeleton` new outputs must subclass,
+and some useful utilities for new outputs.
+
+NOTE Outputs are not considered part of the public API.
+:code:`output/output_utils.py` may change without warning,
+as may the arguments they take.
+
+----------
+Activation
+----------
+Outputs are activated if there is a credential directory available for them.
+The credential directory is expected to be under "secret_dir",
+and to have a name of the form :code:`credentials_{output_name}`.
+
+-------
+Methods
+-------
+These mirror the methods in :code:`botskeleton.py`,
+but aren't guaranteed to be identical,
+and,
+again,
+may change without warning.
+Outputs must implement these themselves.
+
+---------------------------
+:code:`send(self, message)`
+---------------------------
+Send message with text.
+
+----------------------------------------------------
+:code:`send_with_one_media(self, message, filename)`
+----------------------------------------------------
+Send message with text and filename.
+Output will process file as necessary.
+
+-------------------------------------------------------
+:code:`send_with_many_media(self, message, *filenames)`
+-------------------------------------------------------
+Send message with text and filenames.
+Output will process files as necessary.
+
+------------------------------------------
+:code:`linfo/ldebug/lerror(self, message)`
+------------------------------------------
+Log with bot name and message at the given level.
+
+------------------------------------------------------
+:code:`set_duplicate_handler(self, duplicate_handler)`
+------------------------------------------------------
+Set duplicate handler.
+This is based off of birdsite's error code and likely will be removed,
+in favor of just having it in the birdsite output.
+Error handlers are stored in :code:`self.handled_errors`,
+a dictionary.
+
+---------------------------
+:code:`OutputRecord` object
+---------------------------
+Outputs maintain an :code:`OutputRecord` object,
+representing a single send to the output.
+They maintain at least a :code:`_type` and timestamp.
+Individual outputs can add whatever else they like.
+Methods are provided here to convert to a pretty string,
+and to convert back from a dictionary to an object.
+
+---------------------------------------
+:code:`default_duplicate_handler(self)`
+---------------------------------------
+Default duplicate error handler.
+Does nothing.
+
+================
+Built-in Outputs
+================
+There are two built-in outputs:
+birdsite (twitter.com)
+mastodon (mastodon.social)
+
+These are subject to change as necessary by the underlying API wrappers they use.
+Some notes:
+
+----------------------------------
+:code:`outputs/output_birdsite.py`
+----------------------------------
+Credentials directory is  :code:`SECRETS_DIR/output_birdsite`.
+This output expects the following files to be present,
+with proper contents.
+Creating birdsite accounts and getting keys is beyond the scope of this document.
+
+* :code:`CONSUMER_KEY`
+* :code:`CONSUMER_SECRET`
+* :code:`ACCESS_TOKEN`
+* :code:`ACCESS_SECRET`
+
+Optionally,
+this file can be provided.
+This is used to send DMs when errors are encountered.
+
+* :code:`OWNER_HANDLE`
+
+----------------------------------
+:code:`outputs/output_mastodon.py`
+----------------------------------
+Credentials directory is  :code:`SECRETS_DIR/output_mastodon`.
+This output expects the following files to be present,
+with proper contents.
+Creating mastodon bot accounts and getting keys is beyond the scope of this document.
+
+* :code:`ACCESS_TOKEN`
+
+Optionally,
+this file can be provided.
+By default,
+the output will try to send to https://mastodon.social.
+It is recommended to change this,
+perhaps to https://botsin.space,
+and make sure you make an account there.
+
+* :code:`INSTANCE_BASE_URL`
+
+========
+Examples
+========
+I operate several bots using this API,
+and can attest to its general stability.
+
+* https://github.com/lunemercove/dirtyunix_bot
+* https://github.com/lunemercove/weatherbotskeleton
+* https://github.com/lunemercove/isthisska_bot
+* https://github.com/lunemercove/goties_bot
+* https://github.com/lunemercove/nonogram_bot
+* https://github.com/lunemercove/tree_bot
+* https://github.com/lunemercove/knowsska_bot
